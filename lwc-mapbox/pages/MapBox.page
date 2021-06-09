@@ -1,0 +1,59 @@
+<apex:page standardStylesheets="false" showHeader="false" showChat="false" cache="false" applyHtmlTag="false" applyBodyTag="false">
+  <html>
+
+  <head>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.css' rel='stylesheet' />
+
+  </head>
+
+  <body style="margin: 0;" onload="init()">
+
+    <div id='map' style='width: 100%; height: 400px;'></div>
+
+    <script>
+      var lexOrigin = window.location.origin; // for now just get the current domain origin
+
+	  // let parent window know the iframe is loaded
+      function init() {
+        window.parent.postMessage({ type: "body_load", message: "Document loaded" }, lexOrigin);
+        return true;
+      }
+      
+
+      // code to receive message from LWC
+      function onMessageReceive(event) {
+        var origin = event.origin || event.originalEvent.origin;
+
+        console.log("Message Origin", origin);
+        console.log("Received Message", event.data);
+
+        if (typeof event.data == 'object') {
+          loadMap(event.data.access_token);
+        }
+      }
+      window.addEventListener('message', onMessageReceive);
+
+      // init the map
+      function loadMap(access_token) {
+        mapboxgl.accessToken = access_token;
+
+        var map = new mapboxgl.Map({
+          container: 'map',
+          style: 'mapbox://styles/mapbox/streets-v11',
+          center: [144.963226, -37.815338],
+          zoom: 6 // starting zoom: 9
+        });
+
+		// notify or send message back to LWC component
+        map.on('load', function () {
+          // on map load finished pass data to LWC
+          window.parent.postMessage({ type: "map_load", message: "Map loaded" }, lexOrigin);
+        });
+      }
+
+    </script>
+
+  </body>
+  </html>
+</apex:page>
